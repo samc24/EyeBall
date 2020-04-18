@@ -1,3 +1,4 @@
+# https://www.geeksforgeeks.org/circle-detection-using-opencv-python/
 import time
 import cv2 
 import numpy as np 
@@ -21,10 +22,10 @@ while True:
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
   
     # Blur using 3 * 3 kernel. 
-    gray_blurred = cv2.blur(gray, (3, 3)) 
+    gray_blurred = cv2.GaussianBlur(gray, (3, 3), 0) # cv2.blur(gray, (3, 3)) 
   
     # Apply Hough transform on the blurred image. 
-    detected_circles = cv2.HoughCircles(gray_blurred,  cv2.HOUGH_GRADIENT, 1, 100, param1 = 300, param2 = 30, minRadius = 30, maxRadius = 40) 
+    detected_circles = cv2.HoughCircles(gray_blurred,  cv2.HOUGH_GRADIENT, 1, 100, param1 = 300, param2 = 30, minRadius = 30, maxRadius = 40)  # min = 30, max = 40 for jordan3
 
     # Draw circles that are detected. 
     if detected_circles is not None: 
