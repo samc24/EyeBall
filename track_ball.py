@@ -11,17 +11,20 @@ from scipy.optimize import linear_sum_assignment
 # define the lower and upper boundaries of the "green" ball in the HSV color space, then initialize the list of tracked points
 # ball_steph2: (10, 174, 138), low = (8, 160, 130), high = (12, 180, 150)
 # ball_jordan3 = (7, 154, 86) low = (6,145,75), high = (9, 165, 95) https://imagecolorpicker.com/, https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_colorspaces/py_colorspaces.html
-ballColorLower = (7,140,100)# (3,140,75)#(5,140,75)
-ballColorUpper = (14,255,255)#(10, 170, 95) 
+ballColorLower = (7,140,100)#(8,150,110) #(3,100,110) # (3,140,75)#(5,140,75)
+ballColorUpper = (14,255,255)#(14,255,255)#(10, 170, 95) 
 pts = deque(maxlen=64)
-
-video = 'videos/spurs_play_fist21.mp4'
+ 
+play_name = 'fist21'
+video = 'videos/2k_trim_1.mp4'#spurs_play_'+play_name+'.mp4'
 vs = cv2.VideoCapture(video)
 hasFrame, frame = vs.read()
-vid_writer = cv2.VideoWriter('videos/spurs_play_fist21_track.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
+vid_writer = cv2.VideoWriter('videos/2k_trim_1_track_kalman.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
 
 # allow the camera or video file to warm up
 time.sleep(2.0)
+
+
 """uses code from https://github.com/srianant/kalman_filter_multi_object_tracking"""
 class Track(object):
     """Track class for every object to be tracked
@@ -274,8 +277,12 @@ class KalmanFilter(object):
 
 
 
-tracker = Tracker(50, 10, 25, 1)
+tracker = Tracker(150, 30, 2500, 1)
 
+
+#path = 'templates/zYgYQAWrDmw/clip_30/'
+#images = [path+'01.png',path+'02.png',path+'03.png',path+'04.png',path+'05.png',path+'06.png',path+'07.png',path+'08.png',path+'09.png',path+'10.png',path+'11.png',path+'12.png',path+'13.png',path+'14.png',path+'15.png',path+'16.png',path+'17.png',path+'18.png',path+'19.png',path+'20.png']
+#bruh=0
 
 # keep looping until 'q' is pressed or video ends
 while True:
@@ -286,12 +293,15 @@ while True:
 	if frame is None:
 		break
 	
+	#frame = cv2.imread('templates/12.png')
+	#bruh+=1
+
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
 	# Blur using 3 * 3 kernel. 
 	gray_blurred = cv2.GaussianBlur(gray, (3, 3), 0) # cv2.blur(gray, (3, 3)) 
 
 	# resize the frame, blur it, and convert it to the HSV color space
-	#frame = imutils.resize(frame, width=600) # process the frame faster, leading to an increase in FPS 
+	#frame = imutils.resize(frame, width=1000) # process the frame faster, leading to an increase in FPS 
 	blurred = cv2.GaussianBlur(frame, (11, 11), 0) # reduce high frequency noise and allow us to focus on the structural objects
 	hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
@@ -301,7 +311,7 @@ while True:
 	mask = cv2.inRange(hsv, ballColorLower, ballColorUpper) # handles the actual localization of the ball
 	mask = cv2.erode(mask, element, iterations=2) # erode and dilate to remove small blobs
 	mask = cv2.dilate(mask, element, iterations=2)
-	cv2.imshow("mask",mask)
+	#cv2.imshow("mask",mask)
 
 	# find contours in the mask and initialize the current (x, y) center of the ball
 	cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
@@ -321,7 +331,7 @@ while True:
 			approx = cv2.approxPolyDP(contour,epsilon,True)
 			area = cv2.contourArea(contour)
 			# Filter based on length and area
-			if (1 < len(approx) < 1000) & (450 >area > 130): # jordan3: (1 < len(approx) < 1000) & (5000 >area > 1000): 
+			if (1 < len(approx) < 1000) & (450 >area > 80):#200, 50): # jordan3: (1 < len(approx) < 1000) & (5000 >area > 1000): 
 				#print("***")
 				#print("epsilon", epsilon)
 				#print("approx", approx)
@@ -348,7 +358,7 @@ while True:
 		else:
 			vid_writer.write(frame)
 			# show the frame to our screen
-			cv2.imshow("Frame", frame)
+			#cv2.imshow("Frame", frame)
 			cv2.waitKey()
 			key = cv2.waitKey(1) & 0xFF
 
@@ -369,12 +379,12 @@ while True:
 		cntr = ([[cX], [cY]])
 
 		# only proceed if the radius meets a minimum size
-		if radius > 10:
+		#if radius > 10:
 			#if c in contour_list:
 			# draw the circle and centroid on the frame, then update the list of tracked points
-			cv2.circle(frame, (int(x), int(y)), int(radius),
-				(0, 255, 255), 2)
-			cv2.circle(frame, center, 5, (0, 0, 255), -1)
+		cv2.circle(frame, (int(x), int(y)), int(radius),
+			(0, 255, 255), 2)
+		cv2.circle(frame, center, 5, (0, 0, 255), -1)
 
 	# update the points queue
 	pts.appendleft(center)
@@ -390,15 +400,15 @@ while True:
 					if(i==0):
 						x1 = tracker.tracks[i].trace[j][0][0]
 						y1 = tracker.tracks[i].trace[j][1][0]
-						print(tracker.tracks[i].trace[j])
-						print("x = " + str(x1))
-						print("y = " + str(y1))
+						#print(tracker.tracks[i].trace[j])
+						#print("x = " + str(x1))
+						#print("y = " + str(y1))
 						x2 = tracker.tracks[i].trace[j+1][0][0]
 						y2 = tracker.tracks[i].trace[j+1][1][0]
-						thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
-						cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 0, 255), thickness)
-						cv2.circle(frame,(int(x1),int(y1)), 3, (255, 255, 255),-1)
-						cv2.putText(frame, str(i), (int(x2),int(y2)),  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+						thickness = int(np.sqrt(64 / float(i + 1)) )#* 2.5)
+						cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 255, 0), thickness)
+						#cv2.circle(frame,(int(x1),int(y1)), 3, (255, 255, 255),-1)
+						#cv2.putText(frame, str(i), (int(x2),int(y2)),  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
 
 	# loop over the set of tracked points
 	for i in range(1, len(pts)):
@@ -412,7 +422,7 @@ while True:
 
 	vid_writer.write(frame)
 
-	cv2.imshow("Frame", frame)
+	#cv2.imshow("Frame", frame)
 	cv2.waitKey()
 	key = cv2.waitKey(1) & 0xFF
 
