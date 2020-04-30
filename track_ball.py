@@ -11,15 +11,21 @@ from scipy.optimize import linear_sum_assignment
 # define the lower and upper boundaries of the "green" ball in the HSV color space, then initialize the list of tracked points
 # ball_steph2: (10, 174, 138), low = (8, 160, 130), high = (12, 180, 150)
 # ball_jordan3 = (7, 154, 86) low = (6,145,75), high = (9, 165, 95) https://imagecolorpicker.com/, https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_colorspaces/py_colorspaces.html
-ballColorLower = (7,140,100)#(8,150,110) #(3,100,110) # (3,140,75)#(5,140,75)
+ballColorLower = (8,150,100)#(8,150,110) #(3,100,110) # (3,140,75)#(5,140,75)
 ballColorUpper = (14,255,255)#(14,255,255)#(10, 170, 95) 
+lower_area = 20
+upper_area = 200
+dist = 150
+frames = 40
+trace = 3500
+
 pts = deque(maxlen=64)
  
 play_name = 'fist21'
-video = 'videos/2k_trim_1.mp4'#spurs_play_'+play_name+'.mp4'
+video = 'videos/2kpc.mp4'#spurs_play_'+play_name+'.mp4'
 vs = cv2.VideoCapture(video)
 hasFrame, frame = vs.read()
-vid_writer = cv2.VideoWriter('videos/2k_trim_1_track_kalman.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
+vid_writer = cv2.VideoWriter('videos/2kpc_kalman.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
 
 # allow the camera or video file to warm up
 time.sleep(2.0)
@@ -277,7 +283,7 @@ class KalmanFilter(object):
 
 
 
-tracker = Tracker(150, 30, 2500, 1)
+tracker = Tracker(dist, frames, trace, 1)
 
 
 #path = 'templates/zYgYQAWrDmw/clip_30/'
@@ -311,7 +317,7 @@ while True:
 	mask = cv2.inRange(hsv, ballColorLower, ballColorUpper) # handles the actual localization of the ball
 	mask = cv2.erode(mask, element, iterations=2) # erode and dilate to remove small blobs
 	mask = cv2.dilate(mask, element, iterations=2)
-	#cv2.imshow("mask",mask)
+	cv2.imshow("mask",mask)
 
 	# find contours in the mask and initialize the current (x, y) center of the ball
 	cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
@@ -319,6 +325,7 @@ while True:
 	cnts = imutils.grab_contours(cnts)
 	center = None
 
+	cntr = ([[-1], [-1]])
 	# only proceed if at least one contour was found
 	if len(cnts) > 0:
 		# find the largest contour in the mask, then use it to compute the minimum enclosing circle and centroid
@@ -331,7 +338,7 @@ while True:
 			approx = cv2.approxPolyDP(contour,epsilon,True)
 			area = cv2.contourArea(contour)
 			# Filter based on length and area
-			if (1 < len(approx) < 1000) & (450 >area > 80):#200, 50): # jordan3: (1 < len(approx) < 1000) & (5000 >area > 1000): 
+			if (1 < len(approx) < 1000) & (upper_area > area > lower_area):#200, 50): # jordan3: (1 < len(approx) < 1000) & (5000 >area > 1000): 
 				#print("***")
 				#print("epsilon", epsilon)
 				#print("approx", approx)
@@ -346,7 +353,8 @@ while True:
 		#print() 
 		#print()
 		cv2.drawContours(frame, contour_list,  -1, (255,0,0), 2)
-		
+
+
 		# if picking based on circularity 
 		if contour_list != []:
 			most_circ = circularity_list[0]
@@ -358,7 +366,7 @@ while True:
 		else:
 			vid_writer.write(frame)
 			# show the frame to our screen
-			#cv2.imshow("Frame", frame)
+			cv2.imshow("Frame", frame)
 			cv2.waitKey()
 			key = cv2.waitKey(1) & 0xFF
 
@@ -389,7 +397,8 @@ while True:
 	# update the points queue
 	pts.appendleft(center)
 	centers = []
-	centers.append(cntr)
+	if(cntr != ([[-1], [-1]])):
+		centers.append(cntr)
 
 	tracker.Update(centers)
 	if (len(pts) > 0):
@@ -422,7 +431,7 @@ while True:
 
 	vid_writer.write(frame)
 
-	#cv2.imshow("Frame", frame)
+	cv2.imshow("Frame", frame)
 	cv2.waitKey()
 	key = cv2.waitKey(1) & 0xFF
 
