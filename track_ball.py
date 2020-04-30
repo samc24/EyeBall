@@ -289,12 +289,15 @@ tracker = Tracker(dist, frames, trace, 1)
 #path = 'templates/zYgYQAWrDmw/clip_30/'
 #images = [path+'01.png',path+'02.png',path+'03.png',path+'04.png',path+'05.png',path+'06.png',path+'07.png',path+'08.png',path+'09.png',path+'10.png',path+'11.png',path+'12.png',path+'13.png',path+'14.png',path+'15.png',path+'16.png',path+'17.png',path+'18.png',path+'19.png',path+'20.png']
 #bruh=0
-
+count=0
+counter=0
+passcount=0
+startCount=30
 # keep looping until 'q' is pressed or video ends
 while True:
 	# grab the current frame
 	hasFrame, frame = vs.read()
-
+	possiblePass = False
 	# reached the end of the video
 	if frame is None:
 		break
@@ -397,6 +400,7 @@ while True:
 	# update the points queue
 	pts.appendleft(center)
 	centers = []
+	counter= counter+1
 	if(cntr != ([[-1], [-1]])):
 		centers.append(cntr)
 
@@ -404,7 +408,7 @@ while True:
 	if (len(pts) > 0):
 		for i in range(len(tracker.tracks)):
 			if (True):
-				for j in range(len(tracker.tracks[i].trace)-1):
+				for j in range(len(tracker.tracks[i].trace)-2):
 					# Draw trace line
 					if(i==0):
 						x1 = tracker.tracks[i].trace[j][0][0]
@@ -414,11 +418,69 @@ while True:
 						#print("y = " + str(y1))
 						x2 = tracker.tracks[i].trace[j+1][0][0]
 						y2 = tracker.tracks[i].trace[j+1][1][0]
+						x3 = tracker.tracks[i].trace[j+2][0][0]
+						y3 = tracker.tracks[i].trace[j+2][1][0]
 						thickness = int(np.sqrt(64 / float(i + 1)) )#* 2.5)
 						cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 255, 0), thickness)
+						a = np.array([x1,y1])
+						b = np.array([x2,y2])
+						c = np.array([x3,y3])
+                    
+						ba = a - b
+						bc = c - b
+
+						cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+						angle = np.arccos(cosine_angle)
+						#print("RADIANS= " + str(angle))
+						angleD = np.degrees(angle)
+						if((angleD < 60 and angleD > 0) or (angleD < 360 and angleD > 300)):
+							if(count>50 or startCount>0):
+								print("POSSIBLE PASS MADE")
+								#cv2.putText(frame, "PASSES MADE:", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+								possiblePass = True
+								count = 0
+								#print("COUNT RESET")  
+							else:							   
+								cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 0, 255), 2)
+								cv2.line(frame, (int(x2),int(y2)), (int(x3),int(y3)), (0, 0, 255), 2)
+							#print("DEGREES= " + str(angleD))
 						#cv2.circle(frame,(int(x1),int(y1)), 3, (255, 255, 255),-1)
 						#cv2.putText(frame, str(i), (int(x2),int(y2)),  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
-
+	for i in np.arange(1, len(tracker.tracks[0].trace)):
+		# if either of the tracked points are None, ignore
+		# them
+		if tracker.tracks[0].trace[i - 1] is None or tracker.tracks[0].trace[i] is None:
+			continue
+		# check to see if enough points have been accumulated in
+		# the buffer
+		if counter >= 30 and i == 1 and tracker.tracks[0].trace[-10] is not None:
+			# compute the difference between the x and y
+			# coordinates and re-initialize the direction
+			# text variables
+			dX = tracker.tracks[0].trace[-30][0] - tracker.tracks[0].trace[i][0]
+			dY = tracker.tracks[0].trace[-30][1] - tracker.tracks[0].trace[i][1]
+			(dirX, dirY) = ("", "")
+			# ensure there is significant movement in the
+			# x-direction
+			if np.abs(dX) > 50:
+				dirX = "East" if np.sign(dX) == 1 else "West"
+				#print(dirX)
+			# ensure there is significant movement in the
+			# y-direction
+			if np.abs(dY) > 50:
+				dirY = "North" if np.sign(dY) == 1 else "South"
+				#print(dirY)
+				possiblePass = False   
+			# handle when both directions are non-empty
+			if dirX != "" and dirY != "":
+				direction = "{}-{}".format(dirY, dirX)
+			# otherwise, only one direction is non-empty
+			else:
+				direction = dirX if dirX != "" else dirY
+    
+	if(possiblePass==True):
+		passcount = passcount+1
+	count=count+1
 	# loop over the set of tracked points
 	for i in range(1, len(pts)):
 		# if either of the tracked points are None, ignore them
@@ -428,13 +490,13 @@ while True:
 		# otherwise, compute the thickness of the line and draw the connecting lines
 		#thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
 		#cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
-
+	cv2.putText(frame, "PASSES MADE: " + str(passcount), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)        
 	vid_writer.write(frame)
 
 	cv2.imshow("Frame", frame)
 	cv2.waitKey()
 	key = cv2.waitKey(1) & 0xFF
-
+	startCount = startCount-1
 	# if the 'q' key is pressed, stop the loop
 	if key == ord("q"):
 		break
