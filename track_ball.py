@@ -412,7 +412,8 @@ while True:
 
 						ba = a - b #for angle calculation
 						bc = c - b
-
+						thickness = int(np.sqrt(64 / float(i + 1)) )#* 2.5)
+						cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 255, 0), thickness)
 						cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc)) #get cosine angle
 						angle = np.arccos(cosine_angle) #get the actual angle in radians
 						angleD = np.degrees(angle) #convert to degrees
