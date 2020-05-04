@@ -1,6 +1,5 @@
-
-
-<h1>EyeBall: Basketball Path Tracking</h1>
+<img src="EyeBall.png" width="100" height="100">
+<h1>EyeBall: Basketball Path Tracking</h1> 
 <p> 
 CS 585 (Image and Video Computing) final project.  <br>
 Team: Sameer Chaturvedi, Andrew Spencer <br>
