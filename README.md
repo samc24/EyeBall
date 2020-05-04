@@ -61,11 +61,7 @@ Video 2: This video displays the results for detecting the number of passes in a
 https://drive.google.com/file/d/17IWkNZLDxjkMbnsnP1lTesk4JWSOy3d5/view?usp=sharing
 <br><br>
 (Confusion Matrix)
-|Confusion Matrix|                |                | \n
-| :------------- | :------------- | :------------- | \n
-|                | TP = 10        | FP = 3         | \n
-| :------------- | :------------- | :------------- | \n
-|                | FN = 2         | TN = 3         |
+<img src="confusionmatrix.png">
 </p>
 
 <h2> Instructions</h2>
