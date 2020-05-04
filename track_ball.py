@@ -12,7 +12,7 @@ from scipy.optimize import linear_sum_assignment
 # ball_steph2: (10, 174, 138), low = (8, 160, 130), high = (12, 180, 150)
 # ball_jordan3 = (7, 154, 86) low = (6,145,75), high = (9, 165, 95) https://imagecolorpicker.com/, https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_colorspaces/py_colorspaces.html
 ballColorLower = (8,150,100)#(8,150,110) #(3,100,110) # (3,140,75)#(5,140,75)
-ballColorUpper = (14,255,255)#(14,255,255)#(10, 170, 95) 
+ballColorUpper = (14,255,255)#(14,255,255)#(10, 170, 95)
 lower_area = 20
 upper_area = 200
 dist = 150
@@ -20,12 +20,12 @@ frames = 40
 trace = 3500
 
 pts = deque(maxlen=64)
- 
+
 play_name = 'fist21'
-video = 'videos/2kpc.mp4'#spurs_play_'+play_name+'.mp4'
+video = 'videos/2ktest.mp4'#spurs_play_'+play_name+'.mp4'
 vs = cv2.VideoCapture(video)
 hasFrame, frame = vs.read()
-vid_writer = cv2.VideoWriter('videos/2kpc_kalman.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
+vid_writer = cv2.VideoWriter('videos/2kpc_test.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
 
 # allow the camera or video file to warm up
 time.sleep(2.0)
@@ -285,14 +285,10 @@ class KalmanFilter(object):
 
 tracker = Tracker(dist, frames, trace, 1)
 
-
-#path = 'templates/zYgYQAWrDmw/clip_30/'
-#images = [path+'01.png',path+'02.png',path+'03.png',path+'04.png',path+'05.png',path+'06.png',path+'07.png',path+'08.png',path+'09.png',path+'10.png',path+'11.png',path+'12.png',path+'13.png',path+'14.png',path+'15.png',path+'16.png',path+'17.png',path+'18.png',path+'19.png',path+'20.png']
-#bruh=0
-count=0
-counter=0
-passcount=0
-startCount=30
+count=0 #for counting the frames that have passed since the last pass
+counter=0 #for counting the pts in the queue
+passcount=0 #for counting passes
+startCount=30 #for accounting for the first 30 frames
 # keep looping until 'q' is pressed or video ends
 while True:
 	# grab the current frame
@@ -301,21 +297,18 @@ while True:
 	# reached the end of the video
 	if frame is None:
 		break
-	
-	#frame = cv2.imread('templates/12.png')
-	#bruh+=1
 
-	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
-	# Blur using 3 * 3 kernel. 
-	gray_blurred = cv2.GaussianBlur(gray, (3, 3), 0) # cv2.blur(gray, (3, 3)) 
+	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	# Blur using 3 * 3 kernel.
+	gray_blurred = cv2.GaussianBlur(gray, (3, 3), 0) # cv2.blur(gray, (3, 3))
 
 	# resize the frame, blur it, and convert it to the HSV color space
-	#frame = imutils.resize(frame, width=1000) # process the frame faster, leading to an increase in FPS 
+	#frame = imutils.resize(frame, width=1000) # process the frame faster, leading to an increase in FPS
 	blurred = cv2.GaussianBlur(frame, (11, 11), 0) # reduce high frequency noise and allow us to focus on the structural objects
 	hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
 	# construct a mask for the color, then perform a series of dilations and erosions to remove any small blobs left in the mask
-	
+
 	element = None #np.ones((5,5)).astype(np.uint8) # element for morphology, default None
 	mask = cv2.inRange(hsv, ballColorLower, ballColorUpper) # handles the actual localization of the ball
 	mask = cv2.erode(mask, element, iterations=2) # erode and dilate to remove small blobs
@@ -332,33 +325,27 @@ while True:
 	# only proceed if at least one contour was found
 	if len(cnts) > 0:
 		# find the largest contour in the mask, then use it to compute the minimum enclosing circle and centroid
-		
+
 		# detect near-circles in the hsv filtered image
 		contour_list = []
 		circularity_list = []
 		for contour in cnts:
-			epsilon = 0.2*cv2.arcLength(contour,True) # jordan3: 0.05
+			epsilon = 0.2*cv2.arcLength(contour,True)
 			approx = cv2.approxPolyDP(contour,epsilon,True)
 			area = cv2.contourArea(contour)
 			# Filter based on length and area
-			if (1 < len(approx) < 1000) & (upper_area > area > lower_area):#200, 50): # jordan3: (1 < len(approx) < 1000) & (5000 >area > 1000): 
-				#print("***")
-				#print("epsilon", epsilon)
-				#print("approx", approx)
-				#print("area", area)
+			if (1 < len(approx) < 1000) & (upper_area > area > lower_area):
+
 				contour_list.append(contour)
 				area = cv2.contourArea(contour)
 				perimeter = cv2.arcLength(contour,True)
 				circularity = (4*np.pi * area) / (perimeter**2)
-				#print("circularity", circularity)
 				circularity_list.append(circularity)
-				#print("***")
-		#print() 
-		#print()
+
 		cv2.drawContours(frame, contour_list,  -1, (255,0,0), 2)
 
 
-		# if picking based on circularity 
+		# if picking based on circularity
 		if contour_list != []:
 			most_circ = circularity_list[0]
 			c = contour_list[0]
@@ -379,14 +366,14 @@ while True:
 			continue
 
 		# if picking based on contour area
-		#c = max(cnts, key=cv2.contourArea) # largest contour 
+		#c = max(cnts, key=cv2.contourArea) # largest contour
 
 		((x, y), radius) = cv2.minEnclosingCircle(c)
 		M = cv2.moments(c)
 		cX = int(M["m10"] / M["m00"])
 		cY = int(M["m01"] / M["m00"])
 		center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-		
+
 		cntr = ([[cX], [cY]])
 
 		# only proceed if the radius meets a minimum size
@@ -411,41 +398,30 @@ while True:
 				for j in range(len(tracker.tracks[i].trace)-2):
 					# Draw trace line
 					if(i==0):
-						x1 = tracker.tracks[i].trace[j][0][0]
+						x1 = tracker.tracks[i].trace[j][0][0]     #get the last 3 points of movement
 						y1 = tracker.tracks[i].trace[j][1][0]
-						#print(tracker.tracks[i].trace[j])
-						#print("x = " + str(x1))
-						#print("y = " + str(y1))
 						x2 = tracker.tracks[i].trace[j+1][0][0]
 						y2 = tracker.tracks[i].trace[j+1][1][0]
 						x3 = tracker.tracks[i].trace[j+2][0][0]
 						y3 = tracker.tracks[i].trace[j+2][1][0]
-						thickness = int(np.sqrt(64 / float(i + 1)) )#* 2.5)
-						cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 255, 0), thickness)
-						a = np.array([x1,y1])
+						thickness = int(np.sqrt(64 / float(i + 1)) )
+
+						a = np.array([x1,y1]) #organize as points
 						b = np.array([x2,y2])
 						c = np.array([x3,y3])
-                    
-						ba = a - b
+
+						ba = a - b #for angle calculation
 						bc = c - b
 
-						cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-						angle = np.arccos(cosine_angle)
-						#print("RADIANS= " + str(angle))
-						angleD = np.degrees(angle)
-						if((angleD < 60 and angleD > 0) or (angleD < 360 and angleD > 300)):
-							if(count>50 or startCount>0):
+						cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc)) #get cosine angle
+						angle = np.arccos(cosine_angle) #get the actual angle in radians
+						angleD = np.degrees(angle) #convert to degrees
+						if((angleD < 60 and angleD > 0) or (angleD < 360 and angleD > 300)): #if the angle b/t the last 3 points is <60 degrees
+							if(count>35 or startCount>0): #if enough frames have passed since last pass was detected (startCount accounts for the beginning 30 frames)
 								print("POSSIBLE PASS MADE")
-								#cv2.putText(frame, "PASSES MADE:", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-								possiblePass = True
-								count = 0
-								#print("COUNT RESET")  
-							else:							   
-								cv2.line(frame, (int(x1),int(y1)), (int(x2),int(y2)), (0, 0, 255), 2)
-								cv2.line(frame, (int(x2),int(y2)), (int(x3),int(y3)), (0, 0, 255), 2)
-							#print("DEGREES= " + str(angleD))
-						#cv2.circle(frame,(int(x1),int(y1)), 3, (255, 255, 255),-1)
-						#cv2.putText(frame, str(i), (int(x2),int(y2)),  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
+								possiblePass = True     #label as possibly a pass
+								count = 0               #reset counter to 0
+    #detect direction of balls path (https://www.pyimagesearch.com/2015/09/21/opencv-track-object-movement/)
 	for i in np.arange(1, len(tracker.tracks[0].trace)):
 		# if either of the tracked points are None, ignore
 		# them
@@ -453,48 +429,40 @@ while True:
 			continue
 		# check to see if enough points have been accumulated in
 		# the buffer
-		if counter >= 30 and i == 1 and tracker.tracks[0].trace[-10] is not None:
+		if counter >= 10 and i == 1 and tracker.tracks[0].trace[-10] is not None:
 			# compute the difference between the x and y
 			# coordinates and re-initialize the direction
 			# text variables
-			dX = tracker.tracks[0].trace[-30][0] - tracker.tracks[0].trace[i][0]
-			dY = tracker.tracks[0].trace[-30][1] - tracker.tracks[0].trace[i][1]
-			(dirX, dirY) = ("", "")
+			dX = tracker.tracks[0].trace[-10][0] - tracker.tracks[0].trace[i][0] #get the average x and y movement of ball in the past 10 frames
+			dY = tracker.tracks[0].trace[-10][1] - tracker.tracks[0].trace[i][1]
 			# ensure there is significant movement in the
 			# x-direction
+			#if(dY>dX):
+			#	possiblePass = False
+
 			if np.abs(dX) > 50:
 				dirX = "East" if np.sign(dX) == 1 else "West"
 				#print(dirX)
 			# ensure there is significant movement in the
 			# y-direction
-			if np.abs(dY) > 50:
+			if np.abs(dY) > 120:
 				dirY = "North" if np.sign(dY) == 1 else "South"
 				#print(dirY)
-				possiblePass = False   
-			# handle when both directions are non-empty
-			if dirX != "" and dirY != "":
-				direction = "{}-{}".format(dirY, dirX)
-			# otherwise, only one direction is non-empty
-			else:
-				direction = dirX if dirX != "" else dirY
-    
+				if(possiblePass==True):
+					possiblePass = False #if the path of the ball in the last 10 frames is >120 pixels of vertical movement, do not count as a pass
+					#print("too vertical")
+
+
+
 	if(possiblePass==True):
-		passcount = passcount+1
-	count=count+1
-	# loop over the set of tracked points
-	for i in range(1, len(pts)):
-		# if either of the tracked points are None, ignore them
-		if pts[i - 1] is None or pts[i] is None:
-			continue
+		passcount = passcount+1 #update the pass count
+	count=count+1 #incrememnt for counting frames between passes
+	#print on the pass count on screen
+	cv2.putText(frame, "PASSES MADE: " + str(passcount), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+	vid_writer.write(frame) #writes to a video
 
-		# otherwise, compute the thickness of the line and draw the connecting lines
-		#thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
-		#cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
-	cv2.putText(frame, "PASSES MADE: " + str(passcount), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)        
-	vid_writer.write(frame)
-
-	cv2.imshow("Frame", frame)
-	cv2.waitKey()
+	#cv2.imshow("Frame", frame)
+	#cv2.waitKey()
 	key = cv2.waitKey(1) & 0xFF
 	startCount = startCount-1
 	# if the 'q' key is pressed, stop the loop
