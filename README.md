@@ -67,4 +67,4 @@ https://drive.google.com/file/d/17IWkNZLDxjkMbnsnP1lTesk4JWSOy3d5/view?usp=shari
 <p>
 Simply run track_ball.py and modify the video source within the code. From our results, <br>
 Video 1: videos/2k_trim_1.mp4 <br>
-Video2: videos/2kpc.mp4<br><br>
+Video2: videos/2ktest.mp4<br><br>
