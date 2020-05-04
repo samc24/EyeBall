@@ -462,12 +462,12 @@ while True:
 	#vid_writer.write(frame) #writes to a video
 
 	cv2.imshow("Frame", frame)
-	#cv2.waitKey()
-	key = cv2.waitKey(1) & 0xFF
+	cv2.waitKey()
+	#key = cv2.waitKey(1) & 0xFF
 	startCount = startCount-1
 	# if the 'q' key is pressed, stop the loop
-	if key == ord("q"):
-		break
+	#if key == ord("q"):
+	#	break
 
 #vid_writer.release()
 cv2.destroyAllWindows()
