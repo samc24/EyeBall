@@ -25,7 +25,7 @@ play_name = 'fist21'
 video = 'videos/2ktest.mp4'#spurs_play_'+play_name+'.mp4'
 vs = cv2.VideoCapture(video)
 hasFrame, frame = vs.read()
-vid_writer = cv2.VideoWriter('videos/2kpc_test.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
+#vid_writer = cv2.VideoWriter('videos/2kpc_test.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (frame.shape[1], frame.shape[0]))
 
 # allow the camera or video file to warm up
 time.sleep(2.0)
@@ -354,7 +354,7 @@ while True:
 					most_circ=circularity_list[i]
 					c = contour_list[i]
 		else:
-			vid_writer.write(frame)
+			#vid_writer.write(frame)
 			# show the frame to our screen
 			cv2.imshow("Frame", frame)
 			cv2.waitKey()
@@ -459,9 +459,9 @@ while True:
 	count=count+1 #incrememnt for counting frames between passes
 	#print on the pass count on screen
 	cv2.putText(frame, "PASSES MADE: " + str(passcount), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-	vid_writer.write(frame) #writes to a video
+	#vid_writer.write(frame) #writes to a video
 
-	#cv2.imshow("Frame", frame)
+	cv2.imshow("Frame", frame)
 	#cv2.waitKey()
 	key = cv2.waitKey(1) & 0xFF
 	startCount = startCount-1
@@ -469,5 +469,5 @@ while True:
 	if key == ord("q"):
 		break
 
-vid_writer.release()
+#vid_writer.release()
 cv2.destroyAllWindows()
