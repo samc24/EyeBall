@@ -60,8 +60,7 @@ https://drive.google.com/file/d/1puyo55EnbmYyeKux5GK-Odz8ft_kC_S1/view?usp=shari
 Video 2: This video displays the results for detecting the number of passes in a play.<br><br>
 https://drive.google.com/file/d/17IWkNZLDxjkMbnsnP1lTesk4JWSOy3d5/view?usp=sharing
 <br><br>
-(Confusion Matrix)
-<img src="confusionmatrix.png">
+<img src="confusionmatrix.PNG">
 </p>
 
 <h2> Instructions</h2>
