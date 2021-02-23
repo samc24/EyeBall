@@ -68,3 +68,10 @@ https://drive.google.com/file/d/17IWkNZLDxjkMbnsnP1lTesk4JWSOy3d5/view?usp=shari
 Simply run track_ball.py and modify the video source within the code. From our results, <br>
 Video 1: videos/2k_trim_1.mp4 <br>
 Video2: videos/2ktest.mp4<br><br>
+ 
+ <h2> License </h2>
+ <p>
+ The source code is licensed under GPL v3. License, available <a href="https://github.com/samc24/EyeBall/blob/master/LICENSE">here</a>. 
+<h2> Contributing </h2>
+EyeBall is free, open-source software licensed under GPLv3.<br>
+You can open issues for bugs you've found or features you think are missing. You can also submit pull requests to this repository to contribute to adding features and improving the software. 
